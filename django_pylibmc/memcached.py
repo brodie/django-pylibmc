@@ -75,9 +75,9 @@ class PyLibMCCache(BaseMemcachedCache):
         Special case timeout=0 to allow for infinite timeouts.
         """
         if timeout == 0:
-            return timeout
+            return int(timeout)
         else:
-            return super(PyLibMCCache, self)._get_memcache_timeout(timeout)
+            return int(super(PyLibMCCache, self)._get_memcache_timeout(timeout))
 
     def add(self, key, value, timeout=None, version=None):
         key = self.make_key(key, version=version)
