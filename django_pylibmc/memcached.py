@@ -11,10 +11,8 @@ Unlike the default Django caching backends, this backend lets you pass 0 as a
 timeout, which translates to an infinite timeout in memcached.
 """
 import logging
-import warnings
 from threading import local
 
-from django.conf import settings
 from django.core.cache.backends.base import InvalidCacheBackendError
 from django.core.cache.backends.memcached import BaseMemcachedCache
 
@@ -28,13 +26,6 @@ except ImportError:
 log = logging.getLogger('django.pylibmc')
 
 
-MIN_COMPRESS = getattr(settings, 'PYLIBMC_MIN_COMPRESS_LEN', 0)  # Disabled
-if MIN_COMPRESS > 0 and not pylibmc.support_compression:
-    MIN_COMPRESS = 0
-    warnings.warn('A minimum compression length was provided but pylibmc was '
-                  'not compiled with support for it.')
-
-
 class PyLibMCCache(BaseMemcachedCache):
 
     def __init__(self, server, params, username=None, password=None):
@@ -44,6 +35,7 @@ class PyLibMCCache(BaseMemcachedCache):
         self._username = os.environ.get('MEMCACHE_USERNAME', username)
         self._password = os.environ.get('MEMCACHE_PASSWORD', password)
         self._server = os.environ.get('MEMCACHE_SERVERS', server)
+        self._min_compress_len = params.get('MIN_COMPRESS_LEN', 0)
         super(PyLibMCCache, self).__init__(self._server, params, library=pylibmc,
                                            value_not_found_exception=pylibmc.NotFound)
 
@@ -84,7 +76,7 @@ class PyLibMCCache(BaseMemcachedCache):
         try:
             return self._cache.add(key, value,
                                    self._get_memcache_timeout(timeout),
-                                   MIN_COMPRESS)
+                                   self._min_compress_len)
         except pylibmc.ServerError:
             log.error('ServerError saving %s (%d bytes)' % (key, len(value)),
                       exc_info=True)
@@ -105,7 +97,7 @@ class PyLibMCCache(BaseMemcachedCache):
         try:
             return self._cache.set(key, value,
                                    self._get_memcache_timeout(timeout),
-                                   MIN_COMPRESS)
+                                   self._min_compress_len)
         except pylibmc.ServerError:
             log.error('ServerError saving %s (%d bytes)' % (key, len(value)),
                       exc_info=True)
