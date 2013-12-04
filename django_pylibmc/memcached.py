@@ -78,18 +78,18 @@ class PyLibMCCache(BaseMemcachedCache):
                                    self._get_memcache_timeout(timeout),
                                    self._min_compress_len)
         except pylibmc.ServerError:
-            log.error('ServerError saving %s (%d bytes)' % (key, len(value)),
+            log.error('ServerError saving %s (%d bytes)', key, len(value),
                       exc_info=True)
             return False
         except MemcachedError, e:
-            log.error('MemcachedError: %s' % e, exc_info=True)
+            log.error('MemcachedError: %s', e, exc_info=True)
             return False
 
     def get(self, key, default=None, version=None):
         try:
             return super(PyLibMCCache, self).get(key, default, version)
         except MemcachedError, e:
-            log.error('MemcachedError: %s' % e, exc_info=True)
+            log.error('MemcachedError: %s', e, exc_info=True)
             return default
 
     def set(self, key, value, timeout=None, version=None):
@@ -99,37 +99,37 @@ class PyLibMCCache(BaseMemcachedCache):
                                    self._get_memcache_timeout(timeout),
                                    self._min_compress_len)
         except pylibmc.ServerError:
-            log.error('ServerError saving %s (%d bytes)' % (key, len(value)),
+            log.error('ServerError saving %s (%d bytes)', key, len(value),
                       exc_info=True)
             return False
         except MemcachedError, e:
-            log.error('MemcachedError: %s' % e, exc_info=True)
+            log.error('MemcachedError: %s', e, exc_info=True)
             return False
 
     def delete(self, *args, **kwargs):
         try:
             return super(PyLibMCCache, self).delete(*args, **kwargs)
         except MemcachedError, e:
-            log.error('MemcachedError: %s' % e, exc_info=True)
+            log.error('MemcachedError: %s', e, exc_info=True)
             return False
 
     def get_many(self, *args, **kwargs):
         try:
             return super(PyLibMCCache, self).get_many(*args, **kwargs)
         except MemcachedError, e:
-            log.error('MemcachedError: %s' % e, exc_info=True)
+            log.error('MemcachedError: %s', e, exc_info=True)
             return {}
 
     def set_many(self, *args, **kwargs):
         try:
             return super(PyLibMCCache, self).set_many(*args, **kwargs)
         except MemcachedError, e:
-            log.error('MemcachedError: %s' % e, exc_info=True)
+            log.error('MemcachedError: %s', e, exc_info=True)
             return False
 
     def delete_many(self, *args, **kwargs):
         try:
             return super(PyLibMCCache, self).delete_many(*args, **kwargs)
         except MemcachedError, e:
-            log.error('MemcachedError: %s' % e, exc_info=True)
+            log.error('MemcachedError: %s', e, exc_info=True)
             return False
