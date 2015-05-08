@@ -285,23 +285,17 @@ class PylibmcCacheTests(unittest.TestCase):
 
     def test_zero_timeout(self):
         '''
-        Passing in zero for the timeout results in a value that is cached
-        forever.
-
-        In Django, it results in a value that is not cached.
+        Passing in zero for the timeout results in a value that is not cached.
         '''
         self.cache.set('key1', 'eggs', 0)
-        self.assertEqual(self.cache.get('key1'), 'eggs')
+        self.assertEqual(self.cache.get('key1'), None)
 
         self.cache.add('key2', 'ham', 0)
-        self.assertEqual(self.cache.get('key2'), 'ham')
-        added = self.cache.add('key1', 'new eggs', None)
-        self.assertEqual(added, False)
-        self.assertEqual(self.cache.get('key1'), 'eggs')
+        self.assertEqual(self.cache.get('key2'), None)
 
-        self.cache.set_many({'key3': 'sausage', 'key4': 'lobster bisque'}, None)
-        self.assertEqual(self.cache.get('key3'), 'sausage')
-        self.assertEqual(self.cache.get('key4'), 'lobster bisque')
+        self.cache.set_many({'key3': 'sausage', 'key4': 'lobster bisque'}, 0)
+        self.assertEqual(self.cache.get('key3'), None)
+        self.assertEqual(self.cache.get('key4'), None)
 
     def test_float_timeout(self):
         # Make sure a timeout given as a float doesn't crash anything.
