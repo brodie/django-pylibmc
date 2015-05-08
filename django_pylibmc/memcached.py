@@ -34,31 +34,7 @@ log = logging.getLogger('django.pylibmc')
 
 
 MIN_COMPRESS_LEN = getattr(settings, 'PYLIBMC_MIN_COMPRESS_LEN', 0)  # Disabled
-if MIN_COMPRESS_LEN > 0 and not pylibmc.support_compression:
-    MIN_COMPRESS_LEN = 0
-    warnings.warn('A minimum compression length was provided but pylibmc was '
-                  'not compiled with support for it.')
-
-
 COMPRESS_LEVEL = getattr(settings, 'PYLIBMC_COMPRESS_LEVEL', -1)  # zlib.Z_DEFAULT_COMPRESSION
-if not COMPRESS_LEVEL == -1:
-    if not pylibmc.support_compression:
-        warnings.warn('A compression level was provided but pylibmc was '
-                      'not compiled with support for it.')
-    if not pylibmc.__version__ >= '1.3.0':
-        warnings.warn('A compression level was provided but pylibmc 1.3.0 '
-                      'or above is required to handle this option.')
-
-
-# Keyword arguments to configure compression options
-# based on capabilities of a provided pylibmc library.
-COMPRESS_KWARGS = {
-    # Requires pylibmc 1.0 and above. Given that the minumum supported
-    # version (as of now) is 1.1, the parameter is always included.
-    'min_compress_len': MIN_COMPRESS_LEN,
-}
-if pylibmc.__version__ >= '1.3.0':
-    COMPRESS_KWARGS['compress_level'] = COMPRESS_LEVEL
 
 
 class PyLibMCCache(BaseMemcachedCache):
@@ -70,6 +46,33 @@ class PyLibMCCache(BaseMemcachedCache):
         self._username = os.environ.get('MEMCACHE_USERNAME', username or params.get('USERNAME'))
         self._password = os.environ.get('MEMCACHE_PASSWORD', password or params.get('PASSWORD'))
         self._server = os.environ.get('MEMCACHE_SERVERS', server)
+
+        min_compress_len = params.get('MIN_COMPRESS_LEN', MIN_COMPRESS_LEN)
+        if min_compress_len > 0 and not pylibmc.support_compression:
+            min_compress_len = 0
+            warnings.warn('A minimum compression length was provided but '
+                          'pylibmc was not compiled with support for it.')
+
+        compress_level = params.get('COMPRESS_LEVEL', COMPRESS_LEVEL)
+        if compress_level != -1:
+            if not pylibmc.support_compression:
+                warnings.warn('A compression level was provided but pylibmc '
+                              'was not compiled with support for it.')
+            if not pylibmc.__version__ >= '1.3.0':
+                warnings.warn('A compression level was provided but pylibmc '
+                              '1.3.0 or above is required to handle this '
+                              'option.')
+
+        # Keyword arguments to configure compression options
+        # based on capabilities of a provided pylibmc library.
+        self._compress_kwargs = {
+            # Requires pylibmc 1.0 and above. Given that the minumum supported
+            # version (as of now) is 1.1, the parameter is always included.
+            'min_compress_len': min_compress_len,
+        }
+        if compress_level != -1 and pylibmc.__version__ >= '1.3.0':
+            self._compress_kwargs['compress_level'] = compress_level
+
         super(PyLibMCCache, self).__init__(self._server, params, library=pylibmc,
                                            value_not_found_exception=pylibmc.NotFound)
 
@@ -116,7 +119,7 @@ class PyLibMCCache(BaseMemcachedCache):
         try:
             return self._cache.add(key, value,
                                    self.get_backend_timeout(timeout),
-                                   **COMPRESS_KWARGS)
+                                   **self._compress_kwargs)
         except pylibmc.ServerError:
             log.error('ServerError saving %s (%d bytes)' % (key, len(str(value))),
                       exc_info=True)
@@ -137,7 +140,7 @@ class PyLibMCCache(BaseMemcachedCache):
         try:
             return self._cache.set(key, value,
                                    self.get_backend_timeout(timeout),
-                                   **COMPRESS_KWARGS)
+                                   **self._compress_kwargs)
         except pylibmc.ServerError:
             log.error('ServerError saving %s (%d bytes)' % (key, len(str(value))),
                       exc_info=True)
