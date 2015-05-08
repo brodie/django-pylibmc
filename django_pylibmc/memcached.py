@@ -101,7 +101,7 @@ class PyLibMCCache(BaseMemcachedCache):
         Special case timeout=0 to allow for infinite timeouts.
         """
         if timeout == 0:
-            return timeout
+            return 0
 
         try:
             return super(PyLibMCCache, self).get_backend_timeout(timeout)
